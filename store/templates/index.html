@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - Clothes&Co.{% endblock %}
+
+{% block content %}
+<!-- HERO SECTION -->
+<section class="hero-banner text-white text-center d-flex align-items-center" style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('{% static 'images/hero-banner.jpg' %}') center/cover no-repeat;">
+  <div class="container py-5">
+    <h1 class="display-5 fw-bold">Welcome to Clothes&Co.</h1>
+    <p class="lead mb-4">Discover stylish, affordable fashion for every season.</p>
+    <a href="#productGrid" class="btn btn-light btn-lg shadow-sm">
+      <i class="bi bi-bag-fill me-1"></i> Shop Now
+    </a>
+  </div>
+</section>
+
+<!-- MAIN LAYOUT -->
+<div class="container-fluid mt-4">
+  <div class="row">
+    <!-- Sidebar Categories -->
+    <div class="col-lg-3 mb-4">
+      <div class="sidebar-categories">
+        <h5>Categories</h5>
+        <div class="list-group">
+          <button class="list-group-item list-group-item-action category-link active " data-category="all">All Categories</button>
+          {% for cat in categories %}
+          <button class="list-group-item list-group-item-action category-link" data-category="{{ cat.id }}">{{ cat.name }}</button>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="col-lg-9">
+      <div class="row g-4 justify-content-start" id="productGrid">
+        {% for product in products %}
+        <div class="col-12 col-sm-6 col-md-4 product-wrapper" data-category="{{ product.category.id }}">
+          <div class="card product-card fade-in-up h-100">
+            {% if product.images.all %}
+              <div id="carousel{{ product.id }}" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                  {% for img in product.images.all %}
+                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                      <img src="{{ img.image.url }}" class="d-block w-100" style="height: 200px; object-fit: cover;">
+                    </div>
+                  {% endfor %}
+                </div>
+                {% if product.images.count > 1 %}
+                <button class="carousel-control-prev" type="button" data-bs-target="#carousel{{ product.id }}" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carousel{{ product.id }}" data-bs-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </button>
+                {% endif %}
+              </div>
+            {% else %}
+              <img src="{{ product.image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+            {% endif %}
+
+            <div class="card-body">
+              <h6 class="card-title">{{ product.name }}</h6>
+              <p class="card-text small text-muted">{{ product.description }}</p>
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <strong class="text-primary">Rs {{ product.price }}</strong>
+                <form method="post" action="{% url 'update-cart' %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="prodId" value="{{ product.id }}">
+                  <button type="submit" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-cart-plus"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const categoryLinks = document.querySelectorAll('.category-link');
+    const productCards = document.querySelectorAll('.product-wrapper');
+
+    function filterCategory(category) {
+      productCards.forEach(card => {
+        const cardCat = card.dataset.category;
+        if (category === 'all' || category === cardCat) {
+          card.classList.remove('d-none');
+          card.classList.remove('fade-in-up');
+          void card.offsetWidth;
+          card.classList.add('fade-in-up');
+        } else {
+          card.classList.add('d-none');
+        }
+      });
+    }
+
+    categoryLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        const category = link.dataset.category;
+        filterCategory(category);
+
+        categoryLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+
+        document.querySelector('#productGrid')?.scrollIntoView({ behavior: 'smooth' });
+      });
+
+      // Initial default filter
+      filterCategory('all');
+    });
+  });
+</script>
+{% endblock %}
